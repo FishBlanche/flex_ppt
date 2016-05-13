@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   backgroundColor="#000000"
+			    layout="absolute"  width="100%" height="100%"     horizontalAlign="center" verticalAlign="middle"
+			   verticalScrollPolicy="off" 
+			   horizontalScrollPolicy="off" 
+			   backgroundSize="100%"    
+			   applicationComplete="complete_handle(event)"   initialize="init()"  frameRate="60" xmlns:s="library://ns.adobe.com/flex/spark">
+	 
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.setTimeout;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Label;
+			import mx.core.FlexGlobals;
+			import mx.effects.Zoom;
+			import mx.effects.easing.Back;
+			import mx.effects.easing.Quartic;
+			import mx.events.EffectEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.components.Button;
+			import spark.components.Label;
+			import spark.effects.Rotate;
+			import spark.effects.Scale;
+			
+			import caurina.transitions.Tweener;
+			
+			import component.ImgComp;
+			import component.MainBtnComp;
+			import component.PageComp;
+			private	var menu_label:Array = new Array("A", "B", "C", 
+				"D", "E", "F");
+			private	var menu_icon:Array = new Array("assets/btnimg/1.png", "assets/btnimg/2.png", "assets/btnimg/3.png", 
+				"assets/btnimg/4.png", "assets/btnimg/5.png", "assets/btnimg/6.png");
+			
+		    private	var hexagon_animation:Number = 1; // initial state: set 0 to pause (or) 1 to play
+			private	var hexagon_scale:Number = 0.001;
+			private	var hexagon_rotation:Number = 0.08;
+			private	var total:Number = menu_label.length;
+			private	var angle:Number = Math.PI * 2 / total;
+			private	var degree:Number =  angle * 180 / Math.PI;
+			private	var radius:Number = 170;
+			var menu_comp:MainBtnComp;
+			var mypage:PageComp;
+			private function init():void
+			{
+				
+			}
+			private	function resize_listener( e:Event ): void
+			{
+				 
+				bc.removeAllElements();
+				if(mypage&&mypage.scaleX>0)
+				{
+					show_back();
+				}
+				else
+				{
+					add_Btn();
+				} 
+				
+			}
+
+			private function complete_handle(event:Event):void
+			{
+			// 	stage.addEventListener( Event.RESIZE, resize_listener );
+				hexagon_bg.x  = stage.stageWidth/2-hexagon_bg.sourceWidth/2;
+				hexagon_bg.y = stage.stageHeight/2-hexagon_bg.sourceHeight/2;
+				activate_animation();
+				add_pieces();
+				add_Btn();
+				hexagon_bg.addEventListener( MouseEvent.CLICK, start_stop );
+			}
+			private	function hide_bc(no:Number):void
+			{
+				if( no == bc.numElements - 1 )
+				{
+					bc.visible = false;
+					bc.removeAllElements();
+					
+					show_page();
+				}
+			}
+			 
+			private	function show_page( ):void
+			{
+				if(!mypage)
+				{
+					mypage=new PageComp;
+					this.addElement(mypage);
+				}
+			 
+				mypage.scaleX = mypage.scaleY = mypage.alpha = 0;
+				Tweener.addTween( mypage, { scaleX: 1, scaleY: 1, alpha: 1, 
+					time: 0.7, transition: "easeOutBack",onComplete: show_back} );
+				
+            }
+			private	function returnTo_mainMenu(evt:MouseEvent):void
+			{
+				Tweener.addTween( evt.currentTarget, { scaleX: 0, scaleY: 0, alpha: 0,
+					time: 0.7, delay: 0.7, transition: "easeInBack"} );
+				Tweener.addTween( evt.currentTarget, {  
+					time: 0.7, transition: "easeInOutQuart",onComplete:rotate_backMenu } );
+				Tweener.addTween( mypage, { scaleX: 0, scaleY: 0, alpha: 0, 
+					time: 0.7,delay: 0.7, transition: "easeInBack",onStart:remove_text, onComplete: add_Btn } );
+			}
+			private	function remove_text( ):void
+			{
+				mypage.ta.text="";
+			}
+			private	function show_back( ):void
+			{
+				mypage.ta.text="Create your own skins for Flex and AIR Learn how you can use Adobe Creative Suite to create skins for Flex and AIR applications. Click on the icons below to get the software.Create your own skins for Flex and AIR"+
+					"Learn how you can use Adobe Creative Suite to create skins for Flex and AIR applications. Click on the icons below to get the softwareCreate your own skins for Flex and AIR";
+				move_pieces();
+				if(menu_comp)
+				{
+					menu_comp.removeEventListener(MouseEvent.CLICK,returnTo_mainMenu);
+					this.removeElement(menu_comp);
+					menu_comp=null;
+				}
+				menu_comp=new MainBtnComp;
+				 
+				menu_comp.horizontalCenter=undefined;
+				menu_comp.verticalCenter=undefined;
+				menu_comp.iimg.source=menu_icon[0];
+				menu_comp.ilabel.text="GO BACK";
+				menu_comp.addEventListener(MouseEvent.CLICK,returnTo_mainMenu);
+				menu_comp.x=mypage.x+650;
+				menu_comp.y=mypage.y;
+				this.addElement(menu_comp);
+			 
+			    menu_comp.scaleX = menu_comp.scaleY = menu_comp.alpha = 0;
+				Tweener.addTween( menu_comp, { scaleX: 1, scaleY: 1, alpha: 1,
+					time: 0.7, transition: "easeInOutQuart",onComplete:rotate_backMenu});
+				
+		 	    Tweener.addTween( menu_comp, { time: 0.7, delay: 0.7, transition: "easeOutBack",onStart:rotate_backMenu }  );
+		    }
+			private	function rotate_backMenu( ):void
+			{
+				var currentRotation:Number = menu_comp.rotation;  
+				
+				 
+				var mcWidth:Number = menu_comp.width;  
+				
+				var mcHeight:Number = menu_comp.height;  
+				
+				menu_comp.rotation = currentRotation;  
+				
+				//获取mc当前中心点坐标  
+				
+				var pointO:Point = menu_comp.localToGlobal(new Point(mcWidth / 2, mcHeight / 2));  
+				trace("currentRotation"+currentRotation);
+				//旋转mc  
+				if(currentRotation==0)
+				{
+					trace("currentRotation==0");
+					menu_comp.rotation=240;  
+				}
+				else
+				{
+					menu_comp.rotation=0;  
+				}
+				
+				
+				//获取mc旋转后中心点坐标  
+				
+				var pointO2:Point = menu_comp.localToGlobal(new Point(mcWidth / 2, mcHeight / 2));  
+				
+				//平移到原来中心点O  
+				
+				var p3:Point = pointO.subtract(pointO2);  
+				
+				var matrix:Matrix = menu_comp.transform.matrix;  
+				
+				matrix.translate(p3.x, p3.y);  
+				
+				menu_comp.transform.matrix = matrix;  
+			}
+			private	function rotate_menu(menu:MainBtnComp ):void
+			{
+				var currentRotation:Number = menu.rotation;  
+				
+				
+				var mcWidth:Number = menu.width;  
+				
+				var mcHeight:Number = menu.height;  
+				
+				menu.rotation = currentRotation;  
+				
+				//获取mc当前中心点坐标  
+				
+				var pointO:Point = menu.localToGlobal(new Point(mcWidth / 2, mcHeight / 2));  
+				 
+				menu.rotation=330;  
+				 
+				 
+				
+				
+				//获取mc旋转后中心点坐标  
+				
+				var pointO2:Point = menu.localToGlobal(new Point(mcWidth / 2, mcHeight / 2));  
+				
+				//平移到原来中心点O  
+				
+				var p3:Point = pointO.subtract(pointO2);  
+				
+				var matrix:Matrix = menu.transform.matrix;  
+				
+				matrix.translate(p3.x, p3.y);  
+				
+				menu.transform.matrix = matrix;  
+			}
+			private	function menu_click_handle(evt:MouseEvent ):void
+			{
+			//	trace("menu_click_handle");
+				 
+				for( var i:int = 0; i < total; i++ )
+				{
+					 Tweener.addTween(bc.getElementAt(i), { 
+						x: bc.width/2, y: bc.height/2, 
+						scaleX: 0, scaleY: 0, 
+						alpha: 0,
+						time: 0.9, delay: 1.1 + 0.09 * i, transition: "easeInBack", 
+						onComplete: hide_bc, onCompleteParams:[i] } );
+					
+					Tweener.addTween(bc.getElementAt(i), { 
+						onComplete:rotate_menu, onCompleteParams:[bc.getElementAt(i)],
+						time: 0.9, delay: 0.09  * i,
+						transition: "easeInOutQuart" } );
+				}
+
+			}
+			private function add_Btn():void
+			{
+		 		move_pieces();
+				bc.visible = true;
+				for( var i:int = 0; i < total; i++ )
+				{
+					var j:Number = i - 2;
+					var menu_comp:MainBtnComp=new MainBtnComp;
+					menu_comp.iimg.source=menu_icon[i];
+					menu_comp.ilabel.text=menu_label[i];
+					menu_comp.addEventListener(MouseEvent.CLICK,menu_click_handle);
+				    bc.addElement(menu_comp);
+				}
+				stage.addEventListener(Event.RESIZE, resize_listener );
+			    setTimeout(Tween_menu,20);
+			}
+			private	function Tween_menu( ):void
+			{
+				for( var i:int = 0; i < total; i++ )
+				{
+					(bc.getElementAt(i) as MainBtnComp).horizontalCenter=undefined;
+					(bc.getElementAt(i) as MainBtnComp).verticalCenter=undefined;
+					var j:int=i-2;
+					Tweener.addTween(bc.getElementAt(i), { 
+						x:Math.cos(j * angle) * radius+radius+(bc.width-radius*2)*0.25,
+						y:Math.sin(j * angle) * radius+radius+(bc.height-radius*2)*0.25,
+						alpha: 1, time: 0.9, 
+						delay: 0.09 * i, transition: "easeOutBack" } );
+					
+					Tweener.addTween(bc.getElementAt(i), { 
+						  time: 0.9, scaleX: 1, scaleY: 1,
+						delay: 1 + 0.09 * i, transition: "easeInOutQuart", 
+						onComplete: able_menu, onCompleteParams:[i] } );
+				}
+				 
+			}
+
+			private	function able_menu(no:Number):void
+			{
+				if( no == bc.numElements - 1 )
+				{
+					//enable_menu();
+					
+				}
+			}
+
+			private function add_pieces():void
+			{
+				for( var p:Number = 0; p < 40; p++ )
+				{
+				    var	piece:ImgComp = new ImgComp();
+					 
+					piece.x = Math.floor( Math.random() * vg.width-100);
+					piece.y = Math.floor( Math.random() * vg.height-50);
+				    piece.scaleX = piece.scaleY = Math.random() * 0.8 + 0.3;
+				//	piece.rotation=Math.random()*60-10;
+				//	piece.addEventListener( MouseEvent.MOUSE_OVER, move_one );
+					vg.addElement(piece);
+					Tweener.addTween(piece, { 
+						x: Math.floor( Math.random() * vg.width ),
+						y: Math.floor( Math.random() * vg.height),
+						time: 0.9,delay:p*0.01, transition: "easeInOutSine" } );
+				}
+             }
+			private	function move_one(me:MouseEvent):void
+			{
+				Tweener.addTween( me.currentTarget, { 
+					x:Math.random() * vg.width,
+					y: Math.random() * vg.height ,
+					time: 0.6, transition: "easeInOutSine" } );
+				//trace("piece location"+vg.width+","+vg.height+",");
+			}
+
+			private	function start_stop(e:MouseEvent):void
+			{
+				activate_animation();
+			}
+			private		function rotate_bg(e:Event):void
+			{
+			//	trace("hexagon_bg.scaleX"+hexagon_bg.scaleX);
+				hexagon_bg.rotation += hexagon_rotation;
+				hexagon_bg.scaleX = hexagon_bg.scaleY += hexagon_scale;
+				
+				if( hexagon_bg.scaleX > 1.3 || hexagon_bg.scaleX < 0.7 )
+				{
+					hexagon_scale = - hexagon_scale;
+				}
+			}
+
+			private		function activate_animation():void
+			{
+				if( hexagon_animation == 0 )
+				{
+					hexagon_bg.removeEventListener( Event.ENTER_FRAME, rotate_bg );
+					hexagon_animation = 1;
+				}
+				else
+				{
+					hexagon_bg.addEventListener( Event.ENTER_FRAME, rotate_bg );
+					hexagon_animation = 0;
+			    }
+			}
+			private		function move_pieces():void
+			{
+				for( var p:int = 0; p < vg.numElements; p++ )
+				{
+					Tweener.addTween( vg.getElementAt(p), { 
+						x: Math.floor( Math.random() * vg.width ),
+						y: Math.floor( Math.random() * vg.height),
+						time: 0.9,delay:0.1, transition: "easeInOutSine" } );
+				}
+			}
+          ]]>
+	</fx:Script>
+	<s:Group  id="gp" verticalCenter="0" horizontalCenter="0">
+		<s:Image id="hexagon_bg" source="assets/hexagon_bg.png"   smooth="true" verticalCenter="0" horizontalCenter="0" horizontalAlign="center" verticalAlign="middle"/>
+    </s:Group>
+	<s:BorderContainer  cornerRadius="100" borderAlpha="0"  id="vg"  x="{this.width*0.1}" y="{this.height*0.1}" width="{this.width*0.8}" height="{this.height*0.8}">
+		<s:backgroundFill>
+			<s:SolidColor color="haloblue" alpha="0"/>
+		</s:backgroundFill>
+	</s:BorderContainer>
+	<s:BorderContainer    borderAlpha="0"  id="bc" horizontalCenter="0" verticalCenter="0"   width="{this.height*0.9}" height="{this.height*0.9}">
+		<s:backgroundFill>
+			<s:SolidColor color="haloblue" alpha="0"/>
+		</s:backgroundFill>
+	</s:BorderContainer>
+ </mx:Application>

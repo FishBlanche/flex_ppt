@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="700" height="550" horizontalCenter="0" verticalCenter="0" >
+	
+	<s:Image source="assets/hexagon_page_bg.png" scaleMode="stretch"  width="700" height="550" smooth="true"/>
+	 
+ 			<mx:TextArea  editable="false" focusAlpha="0" id="ta"  styleName="taStyle"  borderStyle="none" fontSize="30"  verticalScrollBarStyleName="vscroll"     color="#ffffff" backgroundAlpha="0" horizontalCenter="0" verticalCenter="0" horizontalScrollPolicy="off" width="500" height="350">
+			
+			</mx:TextArea>
+ 		 
+	 <fx:Style>
+		 @namespace mx "library://ns.adobe.com/flex/mx";
+		 .vscroll
+		 {
+			 thumbSkin:Embed(source="assets/thumb.png");
+			 trackSkin: Embed(source="assets/track.png");
+			 downArrowSkin:Embed(source="assets/down.png");
+			 upArrowSkin:Embed(source="assets/up.png");
+		 }
+		 .taStyle
+		 {
+			 
+		 }
+	 </fx:Style>
+</s:Group>
